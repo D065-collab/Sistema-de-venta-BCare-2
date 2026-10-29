@@ -23,7 +23,13 @@
                 <button onclick="switchTab('inventory')" id="btn-inventory" class="px-3 py-2 rounded-md font-medium text-xs sm:text-sm transition text-indigo-100 hover:bg-indigo-600"><i class="fa-solid fa-boxes-stacked mr-1"></i> Inventario</button>
                 <button onclick="switchTab('sales')" id="btn-sales" class="px-3 py-2 rounded-md font-medium text-xs sm:text-sm transition text-indigo-100 hover:bg-indigo-600"><i class="fa-solid fa-chart-line mr-1"></i> Ventas & Stats</button>
                 <button onclick="switchTab('orders')" id="btn-orders" class="px-3 py-2 rounded-md font-medium text-xs sm:text-sm transition text-indigo-100 hover:bg-indigo-600"><i class="fa-solid fa-clipboard-list mr-1"></i> Lista de Compras</button>
+
+                <button onclick="switchTab('users')" id="btn-users" class="hidden px-3 py-2 rounded-md font-medium text-xs sm:text-sm transition text-indigo-100 hover:bg-indigo-600"><i class="fa-solid fa-users mr-1"></i> Usuarios</button>
             </nav>
+            <div class="flex items-center gap-3 mt-2 md:mt-0 text-sm">
+                <span id="current-user-label" class="text-indigo-100"></span>
+                <button id="logout-button" onclick="logout()" class="hidden bg-indigo-900 hover:bg-indigo-950 px-3 py-2 rounded-lg"><i class="fa-solid fa-right-from-bracket mr-1"></i> Salir</button>
+            </div>
         </div>
     </header>
 
@@ -207,7 +213,46 @@
             </div>
         </div>
 
+
+
+
+        <!-- ================= TAB: USUARIOS LOCALES ================= -->
+        <div id="tab-users" class="hidden space-y-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm">
+                <h2 class="text-lg font-bold mb-1"><i class="fa-solid fa-user-shield mr-2 text-indigo-600"></i>Administrar usuarios locales</h2>
+                <p class="text-sm text-slate-500 mb-4">Crea cuentas para las personas que usan este sistema en este navegador.</p>
+                <form id="user-form" onsubmit="createLocalUser(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <input id="new-user-name" required minlength="3" autocomplete="off" class="border rounded-lg px-3 py-2 text-sm" placeholder="Nombre de usuario">
+                    <div class="flex gap-1"><input id="new-user-password" required minlength="6" type="password" autocomplete="new-password" class="w-full min-w-0 border rounded-lg px-3 py-2 text-sm" placeholder="Contraseña (mín. 6)"><button type="button" onclick="togglePassword('new-user-password', this)" class="border rounded-lg px-2 text-slate-600 hover:text-indigo-700" title="Mostrar contraseña" aria-label="Mostrar contraseña"><i class="fa-solid fa-eye" aria-hidden="true"></i></button></div>
+                    <select id="new-user-role" class="border rounded-lg px-3 py-2 text-sm"><option value="cajero">Cajero (ventas)</option><option value="admin">Administrador</option></select>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 text-sm font-semibold"><i class="fa-solid fa-user-plus mr-1"></i> Crear usuario</button>
+                </form>
+                <p id="user-form-message" class="text-sm mt-3" role="status"></p>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto"><table class="w-full text-left border-collapse">
+                    <thead><tr class="bg-slate-50 border-b text-slate-600 text-xs uppercase"><th class="p-4">Usuario</th><th class="p-4">Rol</th><th class="p-4">Acciones</th></tr></thead>
+                    <tbody id="users-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                </table></div>
+            </div>
+        </div>
+
     </main>
+
+    <!-- Pantalla de inicio de sesión / configuración inicial -->
+    <div id="auth-screen" class="fixed inset-0 z-[100] bg-slate-900/90 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-7">
+            <div class="text-center mb-6"><div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-700 text-2xl mb-3"><i class="fa-solid fa-store"></i></div><h2 id="auth-title" class="text-2xl font-black text-slate-800">Iniciar sesión</h2><p id="auth-description" class="text-sm text-slate-500 mt-2">Ingresa con tu usuario y contraseña.</p></div>
+            <form id="login-form" class="space-y-4">
+                <div><label for="login-username" class="block text-sm font-semibold mb-1">Usuario</label><input id="login-username" required autocomplete="username" class="w-full border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tu usuario"></div>
+                <div><label for="login-password" class="block text-sm font-semibold mb-1">Contraseña</label><div class="flex gap-2"><input id="login-password" required type="password" autocomplete="current-password" class="flex-1 min-w-0 border rounded-lg px-3 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tu contraseña"><button type="button" onclick="togglePassword('login-password', this)" class="border rounded-lg px-3 text-slate-600 hover:text-indigo-700" title="Mostrar contraseña" aria-label="Mostrar contraseña"><i class="fa-solid fa-eye" aria-hidden="true"></i></button></div></div>
+                <div id="first-admin-fields" class="hidden space-y-3 border-t pt-4"><p class="text-sm font-semibold text-indigo-700">Primera configuración: crea el administrador principal.</p><input id="first-admin-name" minlength="3" autocomplete="off" class="w-full border rounded-lg px-3 py-2" placeholder="Nombre de usuario administrador"><div class="flex gap-2"><input id="first-admin-password" type="password" minlength="6" autocomplete="new-password" class="flex-1 min-w-0 border rounded-lg px-3 py-2" placeholder="Contraseña nueva (mín. 6 caracteres)"><button type="button" onclick="togglePassword('first-admin-password', this)" class="border rounded-lg px-3 text-slate-600 hover:text-indigo-700" title="Mostrar contraseña" aria-label="Mostrar contraseña"><i class="fa-solid fa-eye" aria-hidden="true"></i></button></div><div class="flex gap-2"><input id="first-admin-confirm" type="password" minlength="6" autocomplete="new-password" class="flex-1 min-w-0 border rounded-lg px-3 py-2" placeholder="Repite la contraseña"><button type="button" onclick="togglePassword('first-admin-confirm', this)" class="border rounded-lg px-3 text-slate-600 hover:text-indigo-700" title="Mostrar contraseña" aria-label="Mostrar contraseña"><i class="fa-solid fa-eye" aria-hidden="true"></i></button></div></div>
+                <p id="auth-message" class="text-sm text-red-600" role="alert"></p>
+                <button id="login-submit" type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg">Ingresar</button>
+            </form>
+            <p class="text-xs text-slate-400 mt-5">Modo local: las cuentas solo funcionan en este navegador y dispositivo. No es seguridad de servidor.</p>
+        </div>
+    </div>
 
     <!-- Modal Agregar/Editar Producto -->
     <div id="product-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
@@ -299,7 +344,17 @@
 
     <!-- Script de lógica -->
     <script>
-        let products = JSON.parse(localStorage.getItem('pos_products')) || [
+        // Lectura segura: si un dato guardado estuviera dañado, no borra ni sobrescribe el almacenamiento.
+        function readStoredJSON(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                return raw === null ? fallback : JSON.parse(raw);
+            } catch (error) {
+                console.error('No se pudo leer el dato local ' + key + '. Se conserva sin modificar.', error);
+                return fallback;
+            }
+        }
+        let products = readStoredJSON('pos_products', null) || [
             { id: 1, name: 'Cuaderno Profesional 100h', category: 'Papelería', price: 2.50, cost: 1.20, stock: 45 },
             { id: 2, name: 'Copia B/N (Carta/A4)', category: 'Copias', price: 0.10, cost: 0.02, stock: 5000 },
             { id: 3, name: 'Impresión a Color', category: 'Copias', price: 0.50, cost: 0.15, stock: 1000 },
@@ -308,12 +363,207 @@
             { id: 6, name: 'Lapicero / Bolígrafo Azul', category: 'Papelería', price: 0.50, cost: 0.20, stock: 120 }
         ];
 
-        let sales = JSON.parse(localStorage.getItem('pos_sales')) || [];
-        let shoppingOrders = JSON.parse(localStorage.getItem('pos_orders')) || [
+        let sales = readStoredJSON('pos_sales', []);
+        let shoppingOrders = readStoredJSON('pos_orders', null) || [
             { id: 1, name: 'Resmas de Papel Bond A4', qty: 10, note: 'Proveedor Librería Central', completed: false }
         ];
         let cart = [];
         let currentPaymentMethod = 'Efectivo';
+        let localUsers = readStoredJSON('pos_local_users', []);
+        let activeUser = null;
+        let firstSetup = localUsers.length === 0;
+
+        function saveUsers() { localStorage.setItem('pos_local_users', JSON.stringify(localUsers)); }
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            const icon = button.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-eye', showing);
+                icon.classList.toggle('fa-eye-slash', !showing);
+            }
+            button.title = showing ? 'Mostrar contraseña' : 'Ocultar contraseña';
+            button.setAttribute('aria-label', button.title);
+        }
+
+        function initializeAuthScreen() {
+            const setupFields = document.getElementById('first-admin-fields');
+            const usernameInput = document.getElementById('login-username');
+            const passwordInput = document.getElementById('login-password');
+            if (firstSetup) {
+                document.getElementById('auth-title').textContent = 'Configurar administrador';
+                document.getElementById('auth-description').textContent = 'Crea la cuenta principal para proteger el acceso al sistema.';
+                setupFields.classList.remove('hidden');
+                usernameInput.closest('div').classList.add('hidden');
+                passwordInput.closest('div').classList.add('hidden');
+                // Desactivar los campos ocultos para que no bloqueen el envío del formulario.
+                usernameInput.required = false;
+                passwordInput.required = false;
+                usernameInput.disabled = true;
+                passwordInput.disabled = true;
+                document.getElementById('login-submit').textContent = 'Crear administrador e ingresar';
+            } else {
+                setupFields.classList.add('hidden');
+                usernameInput.closest('div').classList.remove('hidden');
+                passwordInput.closest('div').classList.remove('hidden');
+                usernameInput.required = true;
+                passwordInput.required = true;
+                usernameInput.disabled = false;
+                passwordInput.disabled = false;
+                document.getElementById('auth-title').textContent = 'Iniciar sesión';
+                document.getElementById('auth-description').textContent = 'Ingresa con tu usuario y contraseña.';
+                document.getElementById('login-submit').textContent = 'Ingresar';
+            }
+        }
+        function legacyLocalPasswordHash(password) {
+            const bytes = new TextEncoder().encode(password);
+            let hash = 2166136261;
+            for (const b of bytes) { hash ^= b; hash = Math.imul(hash, 16777619); }
+            return 'local-' + (hash >>> 0).toString(16);
+        }
+        async function hashPassword(password) {
+            const bytes = new TextEncoder().encode(password);
+            if (window.crypto && window.crypto.subtle) {
+                try {
+                    const digest = await window.crypto.subtle.digest('SHA-256', bytes);
+                    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+                } catch (error) { /* usar hash compatible para archivos locales */ }
+            }
+            return legacyLocalPasswordHash(password);
+        }
+        async function passwordMatches(password, savedHash) {
+            if (savedHash === legacyLocalPasswordHash(password)) return true;
+            try { return savedHash === await hashPassword(password); }
+            catch (error) { return false; }
+        }
+        async function handleLogin(event) {
+            if (event && typeof event.preventDefault === 'function') event.preventDefault();
+            // Evita doble ejecución cuando actúan tanto onclick como submit.
+            if (window.__posLoginInProgress) return;
+            window.__posLoginInProgress = true;
+            const message = document.getElementById('auth-message');
+            const submitButton = document.getElementById('login-submit');
+            message.textContent = '';
+            if (submitButton) submitButton.disabled = true;
+            try {
+                if (firstSetup) {
+                    const username = document.getElementById('first-admin-name').value.trim();
+                    const password = document.getElementById('first-admin-password').value;
+                    const confirmPassword = document.getElementById('first-admin-confirm').value;
+                    if (username.length < 3) { message.textContent = 'El usuario debe tener al menos 3 caracteres.'; return; }
+                    if (password.length < 6) { message.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+                    if (password !== confirmPassword) { message.textContent = 'Las contraseñas no coinciden.'; return; }
+                    const adminUser = { id: Date.now(), username, passwordHash: await hashPassword(password), role: 'admin' };
+                    try {
+                        localUsers.push(adminUser);
+                        saveUsers();
+                        firstSetup = false;
+                        activeUser = adminUser;
+                        showApplication();
+                    } catch (error) {
+                        localUsers = localUsers.filter(u => u.id !== adminUser.id);
+                        message.textContent = 'No se pudo guardar el administrador. Verifica que el almacenamiento local esté habilitado.';
+                    }
+                    return;
+                }
+                const username = document.getElementById('login-username').value.trim().toLowerCase();
+                const password = document.getElementById('login-password').value;
+                const user = localUsers.find(u => String(u.username || '').toLowerCase() === username);
+                if (!user || !(await passwordMatches(password, user.passwordHash))) {
+                    message.textContent = 'Usuario o contraseña incorrectos. Revisa los datos e inténtalo otra vez.';
+                    return;
+                }
+                // Actualiza el hash solo después de un inicio de sesión válido; no borra usuarios ni ventas.
+                const newHash = await hashPassword(password);
+                if (user.passwordHash !== newHash) { user.passwordHash = newHash; saveUsers(); }
+                activeUser = user;
+                document.getElementById('login-form').reset();
+                showApplication();
+            } catch (error) {
+                console.error('Error en el inicio de sesión:', error);
+                message.textContent = 'No se pudo completar el inicio de sesión. Cierra y vuelve a abrir este archivo en Chrome o Edge. No se han borrado tus datos.';
+            } finally {
+                if (submitButton) submitButton.disabled = false;
+                window.__posLoginInProgress = false;
+            }
+        }
+        function showApplication() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('current-user-label').textContent = `${activeUser.username} (${activeUser.role === 'admin' ? 'Administrador' : 'Cajero'})`;
+            document.getElementById('logout-button').classList.remove('hidden');
+            document.getElementById('btn-users').classList.toggle('hidden', activeUser.role !== 'admin');
+            switchTab('pos');
+        }
+        function logout() {
+            activeUser = null;
+            cart = [];
+            renderCart();
+            document.getElementById('current-user-label').textContent = '';
+            document.getElementById('logout-button').classList.add('hidden');
+            document.getElementById('auth-message').textContent = '';
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('login-form').reset();
+            initializeAuthScreen();
+        }
+        async function createLocalUser(event) {
+            event.preventDefault();
+            if (!activeUser || activeUser.role !== 'admin') { alert('Solo un administrador puede crear usuarios.'); return; }
+            const username = document.getElementById('new-user-name').value.trim();
+            const password = document.getElementById('new-user-password').value;
+            const role = document.getElementById('new-user-role').value;
+            const msg = document.getElementById('user-form-message');
+            if (username.length < 3) { msg.className = 'text-sm mt-3 text-red-600'; msg.textContent = 'El usuario debe tener al menos 3 caracteres.'; return; }
+            if (password.length < 6) { msg.className = 'text-sm mt-3 text-red-600'; msg.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+            if (localUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) { msg.className = 'text-sm mt-3 text-red-600'; msg.textContent = 'Ese nombre de usuario ya existe.'; return; }
+            localUsers.push({ id: Date.now(), username, passwordHash: await hashPassword(password), role });
+            saveUsers();
+            document.getElementById('user-form').reset();
+            msg.className = 'text-sm mt-3 text-emerald-700'; msg.textContent = 'Usuario creado correctamente.';
+            renderUsers();
+        }
+        function renderUsers() {
+            const tbody = document.getElementById('users-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            localUsers.forEach(u => {
+                const isSelf = activeUser && u.id === activeUser.id;
+                tbody.innerHTML += `<tr><td class="p-4 font-semibold">${escapeHtml(u.username)}${isSelf ? ' <span class="text-xs text-indigo-600">(sesión actual)</span>' : ''}</td><td class="p-4">${u.role === 'admin' ? 'Administrador' : 'Cajero'}</td><td class="p-4"><div class="flex flex-wrap gap-3"><button onclick="resetLocalUserPassword(${u.id})" class="text-indigo-600 hover:underline">Cambiar contraseña</button>${isSelf ? '<span class="text-xs text-slate-400">No puedes eliminar tu propia cuenta</span>' : `<button onclick="deleteLocalUser(${u.id})" class="text-red-600 hover:underline">Eliminar</button>`}</div></td></tr>`;
+            });
+        }
+        async function resetLocalUserPassword(id) {
+            if (!activeUser || activeUser.role !== 'admin') {
+                alert('Solo un administrador puede cambiar contraseñas de usuarios.');
+                return;
+            }
+            const target = localUsers.find(u => u.id === id);
+            if (!target) return;
+            const password = prompt(`Escribe la nueva contraseña para "${target.username}" (mínimo 6 caracteres):`);
+            if (password === null) return;
+            if (password.length < 6) {
+                alert('La contraseña debe tener al menos 6 caracteres.');
+                return;
+            }
+            const confirmation = prompt('Vuelve a escribir la nueva contraseña para confirmarla:');
+            if (confirmation === null) return;
+            if (password !== confirmation) {
+                alert('Las contraseñas no coinciden. No se guardaron los cambios.');
+                return;
+            }
+            target.passwordHash = await hashPassword(password);
+            saveUsers();
+            alert(`La contraseña de "${target.username}" fue cambiada. Por seguridad, no se puede consultar la contraseña anterior.`);
+        }
+
+        function deleteLocalUser(id) {
+            if (!activeUser || activeUser.role !== 'admin') return;
+            const target = localUsers.find(u => u.id === id);
+            if (!target || target.id === activeUser.id) { alert('No puedes eliminar tu propia cuenta.'); return; }
+            if (target.role === 'admin' && localUsers.filter(u => u.role === 'admin').length <= 1) { alert('Debe quedar al menos un administrador.'); return; }
+            if (confirm(`¿Eliminar el usuario "${target.username}"?`)) { localUsers = localUsers.filter(u => u.id !== id); saveUsers(); renderUsers(); }
+        }
+        function escapeHtml(value) { return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
         function saveData() {
             localStorage.setItem('pos_products', JSON.stringify(products));
@@ -323,7 +573,9 @@
 
         // Navegación de Pestañas
         function switchTab(tab) {
-            ['pos', 'inventory', 'sales', 'orders'].forEach(t => {
+            if (!activeUser) return;
+            if (tab === 'users' && activeUser.role !== 'admin') { alert('Solo un administrador puede gestionar usuarios.'); return; }
+            ['pos', 'inventory', 'sales', 'orders', 'users'].forEach(t => {
                 document.getElementById(`tab-${t}`).classList.add('hidden');
                 document.getElementById(`btn-${t}`).className = "px-3 py-2 rounded-md font-medium text-xs sm:text-sm transition text-indigo-100 hover:bg-indigo-600";
             });
@@ -334,6 +586,7 @@
             if(tab === 'inventory') renderInventory();
             if(tab === 'sales') renderSalesHistory();
             if(tab === 'orders') renderOrders();
+            if(tab === 'users') renderUsers();
         }
 
         // Selección de Método de Pago
@@ -787,7 +1040,26 @@
             renderOrders();
         }
 
-        // Inicializar vista de Productos
+        // Inicio de sesión: usar un solo controlador para clic y tecla Enter.
+        // Esto evita doble ejecución cuando se usa Live Server en VS Code.
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                handleLogin(event);
+            });
+        }
+        // Mensaje visible si el navegador no ejecuta el código esperado.
+        window.addEventListener('error', function(event) {
+            const msg = document.getElementById('auth-message');
+            if (msg && !msg.textContent) msg.textContent = 'Se produjo un error de JavaScript. Abre F12 > Console y revisa el mensaje rojo.';
+        });
+
+
+
+
+        // Iniciar con acceso bloqueado hasta iniciar sesión o crear el primer administrador.
+        initializeAuthScreen();
         renderPOSProducts();
     </script>
 </body>
